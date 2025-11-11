@@ -7,6 +7,7 @@ const ctx = canvas.getContext('2d');
 const GAME_WIDTH = canvas.width;
 const GAME_HEIGHT = canvas.height;
 let score = 0;
+let isGameOver = false;
 
 //ship setup
 const player = {
@@ -35,7 +36,7 @@ const ENEMY_SPEED = .5;
 let enemySpawnTimer = 0;
 const ENEMY_SPAWN_RATE = 60;
 
-//Classes/ Assets
+//Bullets
 class Bullet {
     constructor(x, y) {
         this.x = x;
@@ -59,6 +60,7 @@ function fireBullet() {
     bullets.push(new Bullet(bulletX, bulletY));
 }
 
+//Enemies
 class Enemy {
     constructor(x, y) {
         this.x = x;
@@ -77,7 +79,7 @@ class Enemy {
     }
 }
 
-//Drawing function
+//Player
 function drawPlayer(){
     ctx.fillStyle = 'orange';
     ctx.beginPath();
@@ -105,18 +107,19 @@ function updatePlayer() {
     }
 }
 
-//spawn enemies /game logic
+//spawn enemies
 function spawnEnemy() {
     const enemyX = Math.random() * (GAME_WIDTH - ENEMY_WIDTH);
-    const enemyY = -ENEMY_HEIGHT;
+    const enemyY = - ENEMY_HEIGHT;
 
     enemies.push(new Enemy(enemyX, enemyY));
 }
 
+//Game logic/ bullet and enemy collision
 function runGameLogic() {
     enemies.forEach(enemy => {
         bullets.forEach(bullet => {
-            if (checkCollisions(bullet, enemy)) {
+            if (checkCollision(bullet, enemy)) {
                 enemy.isDestroyed = true;
                 bullet.isDestroyed = true;
                 score += 10;
@@ -127,12 +130,37 @@ function runGameLogic() {
     bullets = bullets.filter(bullet => !bullet.isDestroyed && bullet.y > 0);
 }
 
+//Game Over
+function drawGameOver() {
+    ctx.fillStyle = 'rbga(0, 0, 0, 0.7)';
+    ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+    ctx.fillStyle = 'red';
+    ctx.font = '48px Courier';
+    ctx.textAlign = 'center';
+    ctx.fillText('GAME OVER', GAME_WIDTH / 2, GAME_HEIGHT / 2 - 40);
+//Final score
+    ctx.fillStyle = 'white';
+    ctx.font = '30px "Courier New"';
+    ctx.fillText('Final Score: ${score}', GAME_WIDTH / 2, GAME_HEIGHT / 2 + 10);
+//restart
+    ctx.font = '20px "Courier New"';
+    ctx.fillText('(Refresh to Play Again)', GAME_WIDTH / 2, GAME_HEIGHT / 2 + 50);
+    ctx.textAlign = 'left';    
+}
+
 //collision
-function checkCollisions(rect1, rect2) {
+function checkCollision(rect1, rect2) {
     return rect1.x < rect2.x + rect2.width &&
            rect1.x + rect1.width > rect2.x &&
            rect1.y < rect2.y + rect2.height &&
            rect1.y + rect1.height > rect2.y;
+}
+function checkPlayerCollision() {
+    enemies.forEach(enemy => {
+        if (checkCollision(player, enemy)) {
+            isGameOver = true;
+        }
+    });
 }
 
 //keyboard
@@ -160,7 +188,7 @@ function handleKeyUp(event) {
 //score
 function drawScore() {
     ctx.fillStyle = 'white';
-    ctx.font = '24px Arial';
+    ctx.font = '24px CourierNew';
     ctx.fillText(`Score: ${score}`, 10, 30);
 }
 
@@ -171,16 +199,24 @@ window.addEventListener('keyup', handleKeyUp);
 //Game loop
 function gameLoop() {
     ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
-    updatePlayer();
+    if (isGameOver) {
+        drawGameOver();
+    }else {
+        updatePlayer();
+        checkPlayerCollision();
+    }
 
     enemySpawnTimer++;
     if (enemySpawnTimer >= ENEMY_SPAWN_RATE) {
         spawnEnemy();
         enemySpawnTimer = 0;
     }
+
     enemies.forEach(enemy => enemy.update());
     bullets.forEach(bullet => bullet.update());
+
     runGameLogic();
+
     drawPlayer();
     drawScore();
     enemies.forEach(enemy => enemy.draw());
