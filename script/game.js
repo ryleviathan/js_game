@@ -4,10 +4,27 @@ const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
 //Constants
+const replayButton = document.getElementById('replayButton');
 const GAME_WIDTH = canvas.width;
 const GAME_HEIGHT = canvas.height;
 let score = 0;
 let isGameOver = false;
+
+//starfield
+const STARS_COUNT = 100;
+const STAR_SPEED = 0.5;
+let stars = [];
+
+function initStars() {
+    for (let i = 0; i < STARS_COUNT; i++) {
+        stars.push({
+            x: Math.random() * GAME_WIDTH,
+            y: Math.random() * GAME_HEIGHT,
+            size: Math.random() * 2 + 0.5,
+            color: 'rgba(255, 255, 255, ' + (Math.random() * 0.5 + 0.5) + ')',
+        });
+    }
+}
 
 //ship setup
 const player = {
@@ -17,7 +34,7 @@ width: 50,
 height: 50,
 speed: 5,
 isMovingLeft: false,
-isMovingRight: false,
+isMovingRight: false
 };
 
 //Bullets
@@ -74,9 +91,34 @@ class Enemy {
         this.y += this.speed;
     }
     draw() {
-        ctx.fillStyle = 'yellow';
-        ctx.fillRect(this.x, this.y, this.width, this.height);
+        const x = this.x;
+        const y = this.y;
+        const w = this.width;
+        const h = this.height;
+
+        ctx.fillStyle = 'cyan';
+        ctx.beginPath();
+        ctx.moveTo(x + w / 2, y + h);
+        ctx.lineTo(x, y);
+        ctx.lineTo(x + w, y);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = 'red';
+        ctx.fillRect(x + w * 0.35, y + h * 0.15, w * 0.3, h * 0.3);
     }
+}
+
+function drawStars() {
+    stars.forEach(star => {
+        star.y += STAR_SPEED * star.size;
+
+        if(star.y > GAME_HEIGHT) {
+            star.y = 0;
+            star.x = Math.random() * GAME_WIDTH;
+        }
+        ctx.fillStyle = star.color;
+        ctx.fillRect(star.x, star.y, star.size, star.size);
+    });
 }
 
 //Player
@@ -98,7 +140,7 @@ function updatePlayer() {
     if (player.isMovingRight) {
         player.x += player.speed;
     }
-    //boundary
+    //Player boundary
     if (player.x < 0) {
         player.x = 0;
     }
@@ -128,24 +170,6 @@ function runGameLogic() {
     });
     enemies = enemies.filter(enemy => !enemy.isDestroyed && enemy.y < GAME_HEIGHT);
     bullets = bullets.filter(bullet => !bullet.isDestroyed && bullet.y > 0);
-}
-
-//Game Over
-function drawGameOver() {
-    ctx.fillStyle = 'rbga(0, 0, 0, 0.7)';
-    ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
-    ctx.fillStyle = 'red';
-    ctx.font = '48px Courier';
-    ctx.textAlign = 'center';
-    ctx.fillText('GAME OVER', GAME_WIDTH / 2, GAME_HEIGHT / 2 - 40);
-//Final score
-    ctx.fillStyle = 'white';
-    ctx.font = '30px "Courier New"';
-    ctx.fillText('Final Score: ${score}', GAME_WIDTH / 2, GAME_HEIGHT / 2 + 10);
-//restart
-    ctx.font = '20px "Courier New"';
-    ctx.fillText('(Refresh to Play Again)', GAME_WIDTH / 2, GAME_HEIGHT / 2 + 50);
-    ctx.textAlign = 'left';    
 }
 
 //collision
@@ -188,7 +212,7 @@ function handleKeyUp(event) {
 //score
 function drawScore() {
     ctx.fillStyle = 'white';
-    ctx.font = '24px CourierNew';
+    ctx.font = '24px "Courier New"';
     ctx.fillText(`Score: ${score}`, 10, 30);
 }
 
@@ -196,34 +220,76 @@ function drawScore() {
 window.addEventListener('keydown', handleKeyDown);
 window.addEventListener('keyup', handleKeyUp);
 
-//Game loop
+//Gameplay loop
 function gameLoop() {
     ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+    
     if (isGameOver) {
         drawGameOver();
-    }else {
+    } else {
         updatePlayer();
         checkPlayerCollision();
+        
+        enemySpawnTimer++;
+        if (enemySpawnTimer >= ENEMY_SPAWN_RATE) {
+            spawnEnemy();
+            enemySpawnTimer = 0;
+        }
+
+        enemies.forEach(enemy => enemy.update());
+        bullets.forEach(bullet => bullet.update());
+
+        runGameLogic();
+    
+        drawStars();
+        drawPlayer();
+        enemies.forEach(enemy => enemy.draw());
+        bullets.forEach(bullet => bullet.draw());
+        drawScore();
+        
     }
-
-    enemySpawnTimer++;
-    if (enemySpawnTimer >= ENEMY_SPAWN_RATE) {
-        spawnEnemy();
-        enemySpawnTimer = 0;
-    }
-
-    enemies.forEach(enemy => enemy.update());
-    bullets.forEach(bullet => bullet.update());
-
-    runGameLogic();
-
-    drawPlayer();
-    drawScore();
-    enemies.forEach(enemy => enemy.draw());
-    bullets.forEach(bullet => bullet.draw());
-
+    
     requestAnimationFrame(gameLoop);
 }
 
+//Game Over
+function drawGameOver() {
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+    ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+    ctx.fillStyle = 'red';
+    ctx.font = '48px Courier';
+    ctx.textAlign = 'center';
+    ctx.fillText('GAME OVER', GAME_WIDTH / 2, GAME_HEIGHT / 2 - 40);
+//Final score
+    ctx.fillStyle = 'white';
+    ctx.font = '30px "Courier New"';
+    ctx.fillText(`Final Score: ${score}`, GAME_WIDTH / 2, GAME_HEIGHT / 2 + 10);
+//replay
+replayButton.style.display = 'block';
+replayButton.style.position = 'absolute';
+const buttonWidth = 120;
+const buttonLeft = canvas.offsetLeft + GAME_WIDTH / 2 - (buttonWidth / 2);
+replayButton.style.top = `${canvas.offsetTop + GAME_HEIGHT / 2 + 60}px`;
+replayButton.style.left = `${buttonLeft}px`;
+replayButton.style.width = `${buttonWidth}px`;
+ctx.textAlign = 'left';
+}
 
+function resetGame() {
+    isGameOver = false;
+    score = 0;
+    enemySpawnTimer = 0;
+
+    enemies = [];
+    bullets = [];
+
+    player.x = GAME_WIDTH / 2 - player.width / 2;
+    player.isMovingLeft = false;
+    player.isMovingRight = false;
+
+    replayButton.style.display = 'none';
+}
+replayButton.addEventListener('click', resetGame);
+
+initStars();
 gameLoop();

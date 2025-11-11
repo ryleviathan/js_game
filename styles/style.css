@@ -10,4 +10,23 @@ body{
 #gameCanvas {
     border: 2px solid #ffffff;
     background-color: #050510;
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+}
+
+replayButton {
+    padding: 10px 20px;
+    font-size: 20px;
+    font-weight: bold;
+    color: #ffffff;
+    background-color: #ff4500;
+    border: 3px solid #fff;
+    border-radius: 8px;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(255, 69, 0, 0.5);
+    transition: background-color 0.2s;
+    transform: translateY(-50%);
+}
+
+#replayButton:hover {
+    background-color: #ff7847;
 }
