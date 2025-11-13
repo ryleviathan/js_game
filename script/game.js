@@ -67,6 +67,8 @@ class Bullet {
         this.y -= this.speed;
     }
     draw() {
+        ctx.fillStyle = 'rgba(50, 205, 50, 0.4)';
+        ctx.fillRect(this.x - 1, this.y, this.width + 2, this.height + 5);
         ctx.fillStyle = 'limegreen';
         ctx.fillRect(this.x, this.y, this.width, this.height);
     }
@@ -123,14 +125,14 @@ function drawStars() {
 
 //Player
 function drawPlayer(){
-    ctx.fillStyle = 'orange';
+    ctx.fillStyle = '#CEFF00';
     ctx.beginPath();
     ctx.moveTo(player.x + player.width / 2, player.y);
     ctx.lineTo(player.x, player.y + player.height);
     ctx.lineTo(player.x + player.width, player.y + player.height);
     ctx.closePath();
     ctx.fill();
-}
+ }
 
 //update player
 function updatePlayer() {
