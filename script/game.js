@@ -10,7 +10,7 @@ const GAME_HEIGHT = canvas.height;
 let score = 0;
 let isGameOver = false;
 
-//starfield
+//Starfield generation
 const STARS_COUNT = 100;
 const STAR_SPEED = 0.5;
 let stars = [];
@@ -24,6 +24,19 @@ function initStars() {
             color: 'rgba(255, 255, 255, ' + (Math.random() * 0.5 + 0.5) + ')',
         });
     }
+}
+
+function drawStars() {
+    stars.forEach(star => {
+        star.y += STAR_SPEED * star.size;
+
+        if(star.y > GAME_HEIGHT) {
+            star.y = 0;
+            star.x = Math.random() * GAME_WIDTH;
+        }
+        ctx.fillStyle = star.color;
+        ctx.fillRect(star.x, star.y, star.size, star.size);
+    });
 }
 
 //ship setup
@@ -110,18 +123,7 @@ class Enemy {
     }
 }
 
-function drawStars() {
-    stars.forEach(star => {
-        star.y += STAR_SPEED * star.size;
 
-        if(star.y > GAME_HEIGHT) {
-            star.y = 0;
-            star.x = Math.random() * GAME_WIDTH;
-        }
-        ctx.fillStyle = star.color;
-        ctx.fillRect(star.x, star.y, star.size, star.size);
-    });
-}
 
 //Player
 function drawPlayer(){
@@ -133,7 +135,6 @@ function drawPlayer(){
     ctx.closePath();
     ctx.fill();
  }
-
 //update player
 function updatePlayer() {
     if (player.isMovingLeft) {
@@ -159,7 +160,7 @@ function spawnEnemy() {
     enemies.push(new Enemy(enemyX, enemyY));
 }
 
-//Game logic/ bullet and enemy collision
+//Game logic
 function runGameLogic() {
     enemies.forEach(enemy => {
         bullets.forEach(bullet => {
