@@ -9,6 +9,7 @@ const GAME_WIDTH = canvas.width;
 const GAME_HEIGHT = canvas.height;
 let score = 0;
 let isGameOver = false;
+let gameStarted = false;
 
 //Starfield generation
 const STARS_COUNT = 100;
@@ -24,6 +25,39 @@ function initStars() {
             color: 'rgba(255, 255, 255, ' + (Math.random() * 0.5 + 0.5) + ')',
         });
     }
+}
+
+//Instruction page
+function drawInstructions() {
+    ctx.fillStyle = '#050510';
+    ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+
+    drawStars();
+
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#CEFF00';
+    ctx.font = '60px "Courier New"';
+    ctx.fillText('RY FIGHTER I', GAME_WIDTH / 2, GAME_HEIGHT / 3);
+
+    //Instructions
+    ctx.fillStyle = 'white';
+    ctx.font = '24px "Courier New"';
+    let lineY = GAME_HEIGHT / 2;
+    const lineHeight = 40;
+    ctx.fillText('CONTROLS:', GAME_WIDTH / 2, lineY);
+    lineY += lineHeight;
+    ctx.fillText('<- / A  : Move Left', GAME_WIDTH / 2, lineY);
+    lineY += lineHeight;
+    ctx.fillText('-> / D  : Move Right', GAME_WIDTH / 2, lineY);
+    lineY += lineHeight;
+    ctx.fillText('SPACE  : Fire Bullet', GAME_WIDTH / 2, lineY);
+
+    //Start prompt
+    lineY += lineHeight * 2;
+    ctx.fillStyle = 'cyan';
+    ctx.font = '30px "Courier New"';
+    ctx.fillText('PRESS P TO START', GAME_WIDTH / 2, lineY);
+    ctx.textAlign = 'left';
 }
 
 function drawStars() {
@@ -190,19 +224,28 @@ function checkPlayerCollision() {
     });
 }
 
-//keyboard
+//Keyboard functions
 function handleKeyDown(event) {
-    if (event.key === 'ArrowLeft' || event.key === 'a') {
-        player.isMovingLeft = true;
-        console.log('Left key pressed!');
+    if (!gameStarted && event.key.toLowerCase() === 'p') {
+        gameStarted = true;
+        return;
     }
-    if (event.key === 'ArrowRight' || event.key === 'd') {
-        player.isMovingRight = true;
-    }
-    if (event.key === ' ') {
-        fireBullet();
+
+   
+    if (gameStarted && !isGameOver) {
+        if (event.key === 'ArrowLeft' || event.key.toLowerCase() === 'a') {
+            player.isMovingLeft = true;
+            console.log('Left key pressed!');
+        }
+        if (event.key === 'ArrowRight' || event.key.toLowerCase() === 'd') {
+            player.isMovingRight = true;
+        }
+        if (event.key === ' ' && !event.repeat) {
+            fireBullet();
+        }
     }
 }
+
 function handleKeyUp(event) {
     if (event.key === 'ArrowLeft' || event.key === 'a') {
         player.isMovingLeft = false;
@@ -225,11 +268,18 @@ window.addEventListener('keyup', handleKeyUp);
 
 //Gameplay loop
 function gameLoop() {
-    ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
-    
-    if (isGameOver) {
+    if (!gameStarted) {
+        // State 1: Instructions Screen
+        drawInstructions();
+    } else if (isGameOver) { // <-- Use 'isGameOver', NOT 'gameIsOver'
+        // State 2: Game Over Screen
+        ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
         drawGameOver();
     } else {
+        // State 3: Playing Game
+        ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+        
+        // Update Logic
         updatePlayer();
         checkPlayerCollision();
         
@@ -244,14 +294,15 @@ function gameLoop() {
 
         runGameLogic();
     
+        // Drawing Logic
         drawStars();
         drawPlayer();
         enemies.forEach(enemy => enemy.draw());
         bullets.forEach(bullet => bullet.draw());
         drawScore();
-        
     }
-    
+        
+    // Always call requestAnimationFrame to keep the loop running
     requestAnimationFrame(gameLoop);
 }
 
